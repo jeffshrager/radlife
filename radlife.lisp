@@ -39,7 +39,16 @@
 
 (defvar *stables* nil)
 
-(defparameter *max-p* 100) ;; Top of the pup or pdown scale (100=100%=1.0)
+;;; Top of the pup or pdown scale (100=100%=1.0). You probably don't
+;;; ever want this to be 100 because then there's going to be some
+;;; element that always radiates, and if it's at the top or bottom of
+;;; the scale, because we non-linearly threshold there, you'll never
+;;; land -- those will just keep radiating and never walk down the
+;;; ladder (because there's no where to go!) (??? Another way to do
+;;; this would be to always force the highest and lowest elements to
+;;; be stable.)
+
+(defparameter *max-p* 80) 
 
 (defparameter *show-stables-as-Xs* nil)
 
@@ -49,6 +58,7 @@
   (setf *stables* nil)
   (format t "Initializing decay models:~%")
   (clrhash *aw->decay-model*)
+  (format *x* "aw	pdown	ndown	pup	nup~%")
   (loop for aw below *max-aw*
 	as dm = (make-dm :aw aw
 			 :pdown (/ (random *max-p*) 100.0) :ndown (- (1+ (random *ladder-limit*)))
@@ -63,10 +73,9 @@
 	    (progn (push aw *stables*)
 	      (setf (dm-pdown dm) 0.0
 		    (dm-pup dm) 0.0)))
-	(print dm *x*)
+	(format *x* "~a	~a	~a	~a	~a~%"
+		(dm-aw dm) (dm-pdown dm) (dm-ndown dm) (dm-pup dm) (dm-nup dm))
 	(setf (gethash aw *aw->decay-model*) dm))
-  (format t "Done initializing decay models!~%")
-  (format t "Stable are: ~a~%" *stables*)
   (terpri *x*)
   )
 

@@ -1,5 +1,8 @@
 ;;; (load (compile-file "radlife.lisp"))
 
+;;; ToDo:
+;;;   Add effect range parameter
+
 ;;; This is a version of life that is based on a model of radioactive
 ;;; decay and devay chains. Rather than being a 1 or 0, as usual cells
 ;;; are numbers representing the atomic weight of the cell. Each element
@@ -264,7 +267,28 @@
     (print (list 'steps steps))
     )
   (gif-*worlds* runid)
+  (regen-vhtml)
   )
+
+(defun regen-vhtml ()
+  (with-open-file
+      (o "results/v.html" :direction :output :if-exists :supersede)
+    (loop for file in (directory "results/*.gif")
+	  as name = (pathname-name file)
+	  do (format o "
+<p><hr><p>
+<h3>~a</h3>
+<br>~s<br>
+<image src=~a.gif width=400 height=400>~%
+"
+		     name (ignore-errors (get-info-block name)) name))))
+
+(defun get-info-block (rlname) ;; UUU
+  (with-open-file (i (format nil "results/~a.xls" rlname))
+    (loop for val = (read i nil nil)
+	  until (null val)
+	  when (and (listp val) (eq 'steps (caar val)))
+	  do (return val))))
 
 (defun nstables ()
     (loop for x below *wsize*

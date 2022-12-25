@@ -136,9 +136,14 @@
 
 (defun send-from (x y n)
   (incf (aref *deltas* x y) n)
-  ;; Direction will be (+-1/0 . +-1/0)
+  ;; Direction will be (+-1/0 . +-1/0). (NNN: This can sometimes
+  ;; self-absorb, which will end up being a no-op (at least regrarding
+  ;; its own raditation) because it will go up and down the same
+  ;; amount. This is probably physically plausible -- virtual
+  ;; radiation?)
   (let ((newx (+ x (pic-direction)))
 	(newy (+ y (pic-direction))))
+    ;; Edge protection (the edges are assumed to be absorbers)
     (when (and (>= newx 0) (>= newy 0)
 	       (< newx *wsize*) (< newy *wsize*))
       (incf (aref *deltas* newx newy) n))))

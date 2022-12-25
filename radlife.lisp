@@ -218,14 +218,13 @@
 	  do (loop for x below *wsize*
 		   do (loop for y below *wsize*
 			    do (setf (aref image-data (+ y (* x *wsize*))) (aref world x y))))
-	  (skippy::add-image (skippy::make-image :height *wsize*
-						 :width *wsize*
-						 :data-stream data-stream
-						 :top-position 0
-						 :left-position 0
-						 :image-data image-data
-						 :delay-time 5)
-			     data-stream))
+	  (skippy::make-image :height *wsize*
+			      :width *wsize*
+			      :data-stream data-stream ;; This will auto-add to the data-stream
+			      :top-position 0
+			      :left-position 0
+			      :image-data image-data
+			      :delay-time 5))
     (skippy::output-data-stream data-stream (format nil "results/~a_rl.gif" runid))))
 
 (defun decide-color-for-element (aw)

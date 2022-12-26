@@ -57,6 +57,13 @@
 
 (defparameter *ladder-limit* 3) ;; Range of nup/ndown
 
+;;; Just for Vlod:
+
+(defmacro I-want-to-loop-your-baby! (&body body)
+  `(loop for x below *wsize*
+	 do (loop for y below *wsize*
+		  do ,@body)))
+
 (defun init-decay-models ()
   (setf *stables* nil)
   (format t "Initializing decay models:~%")
@@ -83,9 +90,7 @@
   )
 
 (defun init-world ()
-  (loop for x below *wsize*
-	do (loop for y below *wsize*
-		 do (setf (aref *world* x y) (random *max-aw*))))
+  (I-want-to-loop-your-baby! (setf (aref *world* x y) (random *max-aw*)))
   (print-*world*))
 
 ;;; Updating. Here's the good part: As usual we have a scan phase and
@@ -110,32 +115,29 @@
   )
   
 (defun init-delta-array ()
-  (loop for x below *wsize*
-	do (loop for y below *wsize*
-		 do (setf (aref *deltas* x y) 0))))
+  (I-want-to-loop-your-baby! (setf (aref *deltas* x y) 0)))
 
 (defun radiate ()
-  (loop for x below *wsize*
-	do (loop for y below *wsize*
-		 as dm = (gethash (aref *world* x y) *aw->decay-model*)
-		 as pdown = (dm-pdown dm)
-		 as pup = (dm-pup dm)
-		 as ndown = (dm-ndown dm)
-		 as nup = (dm-nup dm)
-		 as p = (/ (random 100) 100.0)
-		 ;; We need to randomize the order we do this in
-		 ;; otherwise it'll always head in one direction. UUU
-		 do
-		 ;; (NNN ndown is already negated at creation time)
-		 (if (zerop (random 2))
-		     (if (< p pdown)
-			(send-from x y ndown)
-			(if (< p pup)
-			    (send-from x y nup)))
-		     (if (< p pup)
-			 (send-from x y nup)
-			 (if (< p pdown)
-			     (send-from x y ndown)))))))
+  (I-want-to-loop-your-baby! 
+	(let*
+	    ((dm (gethash (aref *world* x y) *aw->decay-model*))
+	     ;; (NNN ndown is already negated at creation time)
+	     (pdown (dm-pdown dm))
+	     (pup (dm-pup dm))
+	     (ndown (dm-ndown dm))
+	     (nup (dm-nup dm))
+	     (p (/ (random 100) 100.0)))
+	  ;; We need to randomize the order we do this in
+	  ;; otherwise it'll always head in one direction. UUU
+	  (if (zerop (random 2))
+	      (if (< p pdown)
+		  (send-from x y ndown)
+		  (if (< p pup)
+		      (send-from x y nup)))
+	      (if (< p pup)
+		  (send-from x y nup)
+		  (if (< p pdown)
+		      (send-from x y ndown)))))))
 
 (defun send-from (x y n)
   (incf (aref *deltas* x y) n)
@@ -158,12 +160,11 @@
   ;;(print '-----------)
   ;;(print *deltas*)
   (let ((delta-sum 0))
-    (loop for x below *wsize*
-	  do (loop for y below *wsize*
-		   as new-val = (max 0 (min (1- *max-aw*) (+ (aref *world* x y) (aref *deltas* x y))))
-		   do (incf delta-sum (aref *deltas* x y))
-		   (setf (aref *world* x y) new-val))
-	  )
+    (I-want-to-loop-your-baby! 
+     (let ((new-val (max 0 (min (1- *max-aw*) (+ (aref *world* x y) (aref *deltas* x y))))))
+       (incf delta-sum (aref *deltas* x y))
+       (setf (aref *world* x y) new-val))
+     )
     (let ((avg (float (/ delta-sum *ncells*))))
       (push avg *avg-delta-record*)
       (format *x* "~a	~a	~a	~a~%"
@@ -182,21 +183,16 @@
 
 (defun print-*world* ()
   (format t "~%-----------------------~%")
-  (loop for x below *wsize*
-	do
-	(format t "~%")
-	(loop for y below *wsize*
-	      as aw = (aref *world* x y)
-	      do (format t " ~a" (cond ((and *show-stables-as-Xs* (member aw *stables*)) "X")
-				       ((>= aw *lcset*) "_")
-				       (t (aref *cset* aw)))))))
+  (I-want-to-loop-your-baby!
+   (let ((aw (aref *world* x y)))
+     (format t " ~a" (cond ((and *show-stables-as-Xs* (member aw *stables*)) "X")
+			   ((>= aw *lcset*) "_")
+			   (t (aref *cset* aw)))))
+   (format t "~%")))
 
 (defun copy-*world* ()
   (let ((w (make-array (list *wsize* *wsize*))))
-    (loop for x below *wsize*
-	  do (loop for y below *wsize*
-		   do (setf (aref w x y)
-			    (aref *world* x y))))
+    (I-want-to-loop-your-baby! (setf (aref w x y) (aref *world* x y)))
     w))
 
 ;;; ===========================
@@ -218,9 +214,7 @@
       (skippy::add-color (decide-color-for-element aw) color-table))
     (loop for world in (reverse *worlds*)
 	  as image-data = (make-array *ncells* :element-type '(unsigned-byte 8))
-	  do (loop for x below *wsize*
-		   do (loop for y below *wsize*
-			    do (setf (aref image-data (+ y (* x *wsize*))) (aref world x y))))
+	  do (I-want-to-loop-your-baby! (setf (aref image-data (+ y (* x *wsize*))) (aref world x y)))
 	  (skippy::make-image :height *wsize*
 			      :width *wsize*
 			      :data-stream data-stream ;; This will auto-add to the data-stream
@@ -290,10 +284,8 @@
 	  when (and (listp val) (eq 'steps (caar val)))
 	  do (return val))))
 
-(defun nstables ()
-    (loop for x below *wsize*
-	  sum (loop for y below *wsize*
-		    when (member (aref *world* x y) *stables*)
-		    sum 1)))
+(defun nstables (&aux (sum 0))
+  (I-want-to-loop-your-baby! (if (member (aref *world* x y) *stables*) (incf sum)))
+  sum)
 
 (run 1000)

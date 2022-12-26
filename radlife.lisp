@@ -59,10 +59,10 @@
 
 ;;; Just for Vlod:
 
-(defmacro I-want-to-loop-your-baby! (&body body)
+(defmacro I-want-to-loop-your-baby! (&body baby)
   `(loop for x below *wsize*
 	 do (loop for y below *wsize*
-		  do ,@body)))
+		  do ,@baby)))
 
 (defun init-decay-models ()
   (setf *stables* nil)

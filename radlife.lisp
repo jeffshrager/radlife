@@ -182,13 +182,13 @@
 (defparameter *worlds* nil)
 
 (defun print-*world* ()
-  (format t "~%-----------------------~%")
+  (format t "~%-----------------------")
   (I-want-to-loop-your-baby!
+   (when (zerop y) (format t "~%"))
    (let ((aw (aref *world* x y)))
      (format t " ~a" (cond ((and *show-stables-as-Xs* (member aw *stables*)) "X")
 			   ((>= aw *lcset*) "_")
-			   (t (aref *cset* aw)))))
-   (format t "~%")))
+			   (t (aref *cset* aw)))))))
 
 (defun copy-*world* ()
   (let ((w (make-array (list *wsize* *wsize*))))
